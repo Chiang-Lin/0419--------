@@ -171,6 +171,7 @@ function renderItemList() {
             <div class="item-details">
                 <span>📂 ${item.category || '未分類'} ${item.size ? '- ' + item.size : ''}</span>
                 <span>📍 ${item.location || '未標示位置'}</span>
+                ${item.purchaseDate ? `<span>📅 買：${item.purchaseDate}</span>` : ''}
             </div>
             ${item.note ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">備註: ${item.note}</div>` : ''}
             <div>${daysText}</div>
@@ -217,6 +218,7 @@ function openItemModal(item) {
         document.getElementById('item-quantity').value = item.quantity || '1';
         document.getElementById('item-status').value = item.status || '庫存中';
         document.getElementById('item-location').value = item.location;
+        document.getElementById('item-purchase-date').value = item.purchaseDate || '';
         document.getElementById('item-open-date').value = item.openDate;
         document.getElementById('item-close-date').value = item.closeDate;
         document.getElementById('item-note').value = item.note;
@@ -345,6 +347,7 @@ async function handleSaveItem(e) {
         price: document.getElementById('item-price').value,
         quantity: document.getElementById('item-quantity').value,
         status: document.getElementById('item-status').value,
+        purchaseDate: document.getElementById('item-purchase-date').value,
         openDate: document.getElementById('item-open-date').value,
         closeDate: document.getElementById('item-close-date').value,
         location: document.getElementById('item-location').value,

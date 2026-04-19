@@ -107,6 +107,7 @@ const API = {
             quantity: getIdx('數量'), // 新增數量映射
             status: getIdx('狀態'),
             location: getIdx('放置位置'), // 找到第一個配對的放置位置 (H欄)
+            purchaseDate: getIdx('購買日期'),
             openDate: getIdx('開封日期'),
             closeDate: getIdx('結案日期'),
             note: getIdx('備註')
@@ -131,6 +132,7 @@ const API = {
                 price: getVal(colMap.price),
                 quantity: getVal(colMap.quantity),
                 status: getVal(colMap.status),
+                purchaseDate: getVal(colMap.purchaseDate),
                 openDate: getVal(colMap.openDate),
                 closeDate: getVal(colMap.closeDate),
                 location: getVal(colMap.location),
@@ -194,6 +196,7 @@ const API = {
         if (colMap.price !== undefined && colMap.price !== -1) rowData[colMap.price] = item.price || '';
         if (colMap.quantity !== undefined && colMap.quantity !== -1) rowData[colMap.quantity] = item.quantity || '';
         if (colMap.status !== undefined && colMap.status !== -1) rowData[colMap.status] = item.status;
+        if (colMap.purchaseDate !== undefined && colMap.purchaseDate !== -1) rowData[colMap.purchaseDate] = item.purchaseDate || '';
         if (colMap.openDate !== undefined && colMap.openDate !== -1) rowData[colMap.openDate] = item.openDate || '';
         if (colMap.closeDate !== undefined && colMap.closeDate !== -1) rowData[colMap.closeDate] = item.closeDate || '';
         if (colMap.location !== undefined && colMap.location !== -1) rowData[colMap.location] = item.location || '';
