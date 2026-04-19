@@ -237,6 +237,7 @@ function openItemModal(item) {
 
     if (isEdit) {
         document.getElementById('form-id').value = item.id;
+        document.getElementById('form-row-index').value = item._rowIndex;
         document.getElementById('item-name').value = item.name;
         document.getElementById('item-category').value = item.category;
         handleCategoryChange(); // 觸發連動
@@ -253,6 +254,7 @@ function openItemModal(item) {
     } else {
         document.getElementById('item-form').reset();
         document.getElementById('form-id').value = '';
+        document.getElementById('form-row-index').value = '';
         document.getElementById('size-group').style.display = 'none';
     }
 
@@ -449,7 +451,8 @@ async function handleSaveItem(e) {
     e.preventDefault(); // 阻止重新整理頁面
     
     const id = document.getElementById('form-id').value;
-    const isEdit = !!id;
+    const rowIndex = document.getElementById('form-row-index').value;
+    const isEdit = !!rowIndex;
     const saveBtn = document.getElementById('save-item-btn');
     saveBtn.disabled = true;
     saveBtn.textContent = '儲存中...';
@@ -472,8 +475,7 @@ async function handleSaveItem(e) {
 
     try {
         if (isEdit) {
-            const originalItem = window.AppState.items.find(i => i.id === id);
-            await API.updateItem(originalItem._rowIndex, itemData);
+            await API.updateItem(rowIndex, itemData);
         } else {
             await API.addItem(itemData);
         }
@@ -494,8 +496,8 @@ async function handleSaveItem(e) {
  * 刪除物資
  */
 async function handleDeleteItem() {
-    const id = document.getElementById('form-id').value;
-    if (!id) return;
+    const rowIndex = document.getElementById('form-row-index').value;
+    if (!rowIndex) return;
     
     if (!confirm('確定要刪除此筆紀錄嗎？此動作無法復原。')) return;
 
@@ -504,10 +506,7 @@ async function handleDeleteItem() {
     deleteBtn.textContent = '刪除中...';
 
     try {
-        const itemIndex = window.AppState.items.findIndex(i => i.id === id);
-        const item = window.AppState.items[itemIndex];
-        
-        await API.deleteItem(item._rowIndex);
+        await API.deleteItem(rowIndex);
         
         // 強制拉取最新資料，確保網頁與資料庫同步
         await API.loadData();
