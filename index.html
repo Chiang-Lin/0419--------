@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>育兒物資清單紀錄工具</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google API Client -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+    <header class="app-header">
+        <h1>🧸 育兒物資紀錄</h1>
+        <div class="auth-section">
+            <button id="auth-btn" class="btn btn-outline" style="display: none;">登出</button>
+        </div>
+    </header>
+
+    <main class="app-container" id="main-content" style="display: none;">
+        <!-- 工具列 -->
+        <div class="toolbar">
+            <button id="add-btn" class="btn btn-primary">＋ 新增物資</button>
+            <button id="manage-category-btn" class="btn btn-secondary">類別管理</button>
+        </div>
+
+        <!-- 條列式清單容器 -->
+        <div class="list-container">
+            <ul id="item-list" class="item-list">
+                <!-- 動態生成的清單項目會放在這裡 -->
+                <li class="loading-state">載入中...</li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- 登入提示畫面 -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <h2>歡迎使用</h2>
+            <p>請先登入 Google 帳號以存取物資清單</p>
+            <button id="login-btn" class="btn btn-primary">使用 Google 登入</button>
+        </div>
+    </div>
+
+    <!-- 新增/編輯物資 Modal -->
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">新增物資</h2>
+                <button class="close-btn" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="item-form">
+                    <input type="hidden" id="form-id">
+                    
+                    <div class="form-group">
+                        <label for="item-name">物品名稱 *</label>
+                        <input type="text" id="item-name" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="item-category">類別 *</label>
+                            <select id="item-category" required>
+                                <option value="" disabled selected>請選擇類別</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="size-group" style="display: none;">
+                            <label for="item-size">尺寸</label>
+                            <select id="item-size">
+                                <option value="">無</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="item-source">來源</label>
+                            <select id="item-source">
+                                <option value="購買">購買</option>
+                                <option value="親友贈送">親友贈送</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="item-price">價格</label>
+                            <input type="number" id="item-price" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="item-quantity">數量</label>
+                            <input type="number" id="item-quantity" min="1" value="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="item-status">狀態 *</label>
+                            <select id="item-status" required>
+                                <option value="庫存中">庫存中</option>
+                                <option value="使用中">使用中</option>
+                                <option value="已用完">已用完</option>
+                                <option value="已轉贈">已轉贈</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="item-location">放置位置</label>
+                            <input type="text" id="item-location" placeholder="例：客廳櫃子">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="item-open-date">開封日期</label>
+                            <input type="date" id="item-open-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="item-close-date">結案日期</label>
+                            <input type="date" id="item-close-date">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-note">備註</label>
+                        <textarea id="item-note" rows="2"></textarea>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-btn" class="btn btn-danger" style="display:none; margin-right:auto;">刪除</button>
+                <button type="button" class="btn btn-outline" id="cancel-modal-btn">取消</button>
+                <button type="submit" form="item-form" class="btn btn-primary" id="save-item-btn">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 類別管理 Modal -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>類別管理</h2>
+                <button class="close-btn" id="close-category-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group add-category-row">
+                    <input type="text" id="new-category-input" placeholder="輸入新類別...">
+                    <button id="add-category-btn" class="btn btn-primary">新增</button>
+                </div>
+                <ul id="manage-category-list" class="manage-list">
+                    <!-- 類別項目 -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="finish-category-btn">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 JS 模組 -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
