@@ -450,6 +450,12 @@ async function deleteSource(index) {
 async function handleSaveItem(e) {
     e.preventDefault(); // 阻止重新整理頁面
     
+    const nameVal = document.getElementById('item-name').value.trim();
+    if (!nameVal) {
+        alert("「物品名稱」為必填欄位，請填寫後再儲存！");
+        return;
+    }
+    
     const id = document.getElementById('form-id').value;
     const rowIndex = document.getElementById('form-row-index').value;
     const isEdit = !!rowIndex;

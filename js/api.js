@@ -139,6 +139,11 @@ const API = {
                 note: getVal(colMap.note)
             };
         });
+        
+        // 過濾掉完全空白的列 (防範假刪除導致的空資料)
+        window.AppState.items = window.AppState.items.filter(item => {
+            return item.name !== '' || item.id !== '' || item.category !== '' || item.status !== '';
+        });
     },
 
     parseSettings(rows) {
