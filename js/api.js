@@ -62,9 +62,10 @@ const API = {
         console.log("從 Google Sheets 載入資料...");
         if (!window.AppState.token) throw new Error("尚未登入");
 
+        // 設定要讀取的範圍，改為 A:Z 確保能讀到新增的較後方欄位
         const ranges = [
-            `'${CONFIG.SHEET_RECORDS}'!A:L`,
-            `'${CONFIG.SHEET_SETTINGS}'!A:D`
+            `'${CONFIG.SHEET_RECORDS}'!A:Z`,
+            `'${CONFIG.SHEET_SETTINGS}'!A:Z`
         ];
         
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values:batchGet?ranges=${encodeURIComponent(ranges[0])}&ranges=${encodeURIComponent(ranges[1])}`;
@@ -206,7 +207,8 @@ const API = {
      */
     async addItem(item) {
         const values = [this.itemToArray(item)];
-        await this.fetchSheet(`'${CONFIG.SHEET_RECORDS}'!A1:L1:append`, 'POST', {
+        // 將範圍放寬到 Z，確保如果是 M欄 (index 12) 等比較後面的欄位也不會被 Google API 截斷
+        await this.fetchSheet(`'${CONFIG.SHEET_RECORDS}'!A1:Z1:append`, 'POST', {
             values: values
         });
         // 為了知道剛剛的資料在第幾列，我們需要重新拉取一次，以免本地與遠端斷鏈
@@ -218,7 +220,7 @@ const API = {
      */
     async updateItem(rowIndex, item) {
         const values = [this.itemToArray(item)];
-        await this.fetchSheet(`'${CONFIG.SHEET_RECORDS}'!A${rowIndex}:L${rowIndex}`, 'PUT', {
+        await this.fetchSheet(`'${CONFIG.SHEET_RECORDS}'!A${rowIndex}:Z${rowIndex}`, 'PUT', {
             values: values
         });
     },

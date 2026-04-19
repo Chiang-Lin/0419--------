@@ -46,6 +46,9 @@ function initApp() {
     document.getElementById('item-form').addEventListener('submit', handleSaveItem);
     document.getElementById('delete-btn').addEventListener('click', handleDeleteItem);
 
+    // 搜尋功能
+    document.getElementById('search-input').addEventListener('input', renderItemList);
+
     // UI 初始化顯示
     document.getElementById('login-overlay').classList.add('active');
 }
@@ -126,8 +129,25 @@ function renderItemList() {
         return;
     }
     
+    const keyword = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+
     // 反轉陣列，讓最新新增的在上方
-    const reversedItems = [...window.AppState.items].reverse();
+    let reversedItems = [...window.AppState.items].reverse();
+
+    // 搜尋過濾
+    if (keyword) {
+        reversedItems = reversedItems.filter(item => 
+            (item.name || '').toLowerCase().includes(keyword) || 
+            (item.note || '').toLowerCase().includes(keyword) ||
+            (item.category || '').toLowerCase().includes(keyword) ||
+            (item.location || '').toLowerCase().includes(keyword)
+        );
+    }
+    
+    if (reversedItems.length === 0) {
+        listContainer.innerHTML = '<li class="loading-state">找不到符合的物資</li>';
+        return;
+    }
 
     reversedItems.forEach(item => {
         const li = document.createElement('li');
@@ -335,15 +355,12 @@ async function handleSaveItem(e) {
         if (isEdit) {
             const originalItem = window.AppState.items.find(i => i.id === id);
             await API.updateItem(originalItem._rowIndex, itemData);
-            
-            // 更新本地資料
-            Object.assign(originalItem, itemData);
         } else {
             await API.addItem(itemData);
-            // 新增成功後，把新資料加入本地
-            window.AppState.items.push(itemData);
         }
         
+        // 為了確保剛剛新增的項目擁有正確的 _rowIndex 與最新資料，強制從 Google Sheets 重拉一次
+        await API.loadData();
         renderItemList();
         closeItemModal();
     } catch (err) {
@@ -373,8 +390,8 @@ async function handleDeleteItem() {
         
         await API.deleteItem(item._rowIndex);
         
-        // 更新本地
-        window.AppState.items.splice(itemIndex, 1);
+        // 強制拉取最新資料，確保網頁與資料庫同步
+        await API.loadData();
         renderItemList();
         closeItemModal();
     } catch (err) {

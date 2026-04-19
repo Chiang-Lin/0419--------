@@ -2,19 +2,19 @@
   Morandi Blue & Green Color Palette 
 */
 :root {
-  /* Colors */
-  --primary-color: #EBB02D;
-  /* Warm Yellow */
-  --primary-hover: #D69C1A;
-  --secondary-color: #F4A261;
-  /* Soft Orange Accent */
-  --secondary-hover: #E76F51;
-  --danger-color: #D96C6C;
-  /* Soft Red for delete */
-  --danger-hover: #C35A5A;
+  /* Colors - Morandi Red Theme */
+  --primary-color: #C07C74;
+  /* Morandi Red / Dusty Rose */
+  --primary-hover: #A8655E;
+  --secondary-color: #D9A098;
+  /* Lighter Red Accent */
+  --secondary-hover: #C5887F;
+  --danger-color: #9C574F;
+  /* Darker Red for delete */
+  --danger-hover: #82433C;
 
-  --bg-color: #F4F6F5;
-  /* Light creamy gray for background */
+  --bg-color: #FAEDEC;
+  /* Light creamy red/white for background */
   --surface-color: #FFFFFF;
   --text-main: #3C4844;
   --text-muted: #828D8A;
@@ -334,7 +334,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(235, 176, 45, 0.2);
+  box-shadow: 0 0 0 2px rgba(192, 124, 116, 0.2);
 }
 
 /* Category Management List */
