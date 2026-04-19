@@ -20,7 +20,7 @@ const API = {
             range = range.replace(':append', '');
         }
 
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(range)}${appendSuffix}`;
+        let url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(range)}${appendSuffix}`;
 
         const headers = {
             'Authorization': `Bearer ${window.AppState.token}`,
@@ -36,7 +36,7 @@ const API = {
             // 對於寫入操作，加上 valueInputOption
             options.body = JSON.stringify(body);
             if (method === 'PUT' || method === 'POST') {
-                return await fetch(`${url}?valueInputOption=USER_ENTERED`, options);
+                url = `${url}?valueInputOption=USER_ENTERED`;
             }
         }
 
@@ -85,8 +85,10 @@ const API = {
     },
 
     parseRecords(rows) {
-        if (rows.length <= 1) {
+        if (rows.length === 0) {
             window.AppState.items = [];
+            window.AppState.colMap = {};
+            window.AppState.sheetColCount = 12;
             return;
         }
 
@@ -118,6 +120,11 @@ const API = {
         // 儲存到全域供存檔時保持寫入欄位一致
         window.AppState.colMap = colMap;
         window.AppState.sheetColCount = headers.length > 11 ? headers.length : 12;
+
+        if (rows.length === 1) {
+            window.AppState.items = [];
+            return;
+        }
 
         const dataRows = rows.slice(1);
         window.AppState.items = dataRows.map((row, index) => {
