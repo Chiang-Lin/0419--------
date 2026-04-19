@@ -22,7 +22,6 @@
         <!-- 工具列 -->
         <div class="toolbar">
             <button id="add-btn" class="btn btn-primary">＋ 新增物資</button>
-            <button id="manage-category-btn" class="btn btn-secondary">類別管理</button>
         </div>
 
         <!-- 搜尋列 -->
@@ -66,9 +65,12 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="item-category">類別 *</label>
+                            <label for="item-category" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                類別 *
+                                <a href="#" tabindex="-1" onclick="openCategoryModal(); return false;" style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: normal;">＋ 管理類別</a>
+                            </label>
                             <select id="item-category" required>
-                                <option value="" disabled selected>請選擇類別</option>
+                                <option value="">請選擇</option>
                             </select>
                         </div>
                         <div class="form-group" id="size-group" style="display: none;">
@@ -81,11 +83,12 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="item-source">來源</label>
+                            <label for="item-source" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                來源
+                                <a href="#" tabindex="-1" onclick="openSourceModal(); return false;" style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: normal;">＋ 管理來源</a>
+                            </label>
                             <select id="item-source">
-                                <option value="購買">購買</option>
-                                <option value="親友贈送">親友贈送</option>
-                                <option value="其他">其他</option>
+                                <option value="">請選擇</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -166,6 +169,28 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" id="finish-category-btn">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 來源管理 Modal -->
+    <div id="source-modal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>來源管理</h2>
+                <button class="close-btn" id="close-source-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group add-category-row">
+                    <input type="text" id="new-source-input" placeholder="輸入新來源...">
+                    <button id="add-source-btn" class="btn btn-primary">新增</button>
+                </div>
+                <ul id="manage-source-list" class="manage-list">
+                    <!-- 來源項目 -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="finish-source-btn">完成</button>
             </div>
         </div>
     </div>

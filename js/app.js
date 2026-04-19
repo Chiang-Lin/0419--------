@@ -16,27 +16,34 @@ function initApp() {
     document.getElementById('close-modal-btn').addEventListener('click', closeItemModal);
     document.getElementById('cancel-modal-btn').addEventListener('click', closeItemModal);
     
-    // 類別管理 Modal 綁定
-    document.getElementById('manage-category-btn').addEventListener('click', () => {
-        renderCategoryManageList();
-        document.getElementById('category-modal').classList.add('active');
-    });
+    // 原本全域類別按鈕已移除，剩內部關閉鈕與事件
     document.getElementById('close-category-btn').addEventListener('click', () => {
         document.getElementById('category-modal').classList.remove('active');
     });
     document.getElementById('finish-category-btn').addEventListener('click', () => {
-        // 重繪主表單的下拉，並關閉視窗
         populateCategoryDropdowns();
         document.getElementById('category-modal').classList.remove('active');
     });
     document.getElementById('add-category-btn').addEventListener('click', addCategory);
 
+    // 來源管理 Modal 綁定
+    document.getElementById('close-source-btn').addEventListener('click', () => {
+        document.getElementById('source-modal').classList.remove('active');
+    });
+    document.getElementById('finish-source-btn').addEventListener('click', () => {
+        populateSourceDropdown();
+        document.getElementById('source-modal').classList.remove('active');
+    });
+    document.getElementById('add-source-btn').addEventListener('click', addSource);
+
     // 關閉 Modal 若點擊背景
     window.addEventListener('click', (e) => {
         const itemModal = document.getElementById('item-modal');
         const catModal = document.getElementById('category-modal');
+        const srcModal = document.getElementById('source-modal');
         if (e.target === itemModal) closeItemModal();
         if (e.target === catModal) catModal.classList.remove('active');
+        if (e.target === srcModal) srcModal.classList.remove('active');
     });
 
     // 表單變更連動 (類別與尺寸)
@@ -187,13 +194,33 @@ function renderItemList() {
  */
 function populateCategoryDropdowns() {
     const catSelect = document.getElementById('item-category');
-    catSelect.innerHTML = '<option value="" disabled selected>請選擇類別</option>';
+    const currentVal = catSelect.value;
+    
+    catSelect.innerHTML = '<option value="">請選擇</option>';
     window.AppState.categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        catSelect.appendChild(opt);
+        catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
     });
+    
+    if (currentVal) {
+        catSelect.value = currentVal;
+    }
+}
+
+/**
+ * 處理來源下拉選單渲染
+ */
+function populateSourceDropdown() {
+    const srcSelect = document.getElementById('item-source');
+    const currentVal = srcSelect.value;
+    
+    srcSelect.innerHTML = '<option value="">請選擇</option>';
+    window.AppState.sources.forEach(src => {
+        srcSelect.innerHTML += `<option value="${src}">${src}</option>`;
+    });
+    
+    if (currentVal) {
+        srcSelect.value = currentVal;
+    }
 }
 
 /**
@@ -206,6 +233,7 @@ function openItemModal(item) {
     
     // 初始化下拉選項
     populateCategoryDropdowns();
+    populateSourceDropdown();
 
     if (isEdit) {
         document.getElementById('form-id').value = item.id;
@@ -233,6 +261,22 @@ function openItemModal(item) {
 
 function closeItemModal() {
     document.getElementById('item-modal').classList.remove('active');
+}
+
+/**
+ * 開啟類別管理 Modal
+ */
+function openCategoryModal() {
+    renderCategoryManageList();
+    document.getElementById('category-modal').classList.add('active');
+}
+
+/**
+ * 開啟來源管理 Modal
+ */
+function openSourceModal() {
+    renderSourceManageList();
+    document.getElementById('source-modal').classList.add('active');
 }
 
 /**
@@ -301,6 +345,9 @@ async function addCategory() {
     input.value = ''; // 清空輸入框
     renderCategoryManageList();
     
+    // 即時更新底下的下拉選單
+    populateCategoryDropdowns();
+
     // 同步到 Sheets
     try {
         await API.syncCategories();
@@ -317,12 +364,81 @@ async function deleteCategory(index) {
     
     window.AppState.categories.splice(index, 1);
     renderCategoryManageList();
+    
+    // 即時更新底下的下拉選單
+    populateCategoryDropdowns();
 
     // 同步到 Sheets
     try {
         await API.syncCategories();
     } catch(e) {
         alert("同步類別失敗：" + e.message);
+    }
+}
+
+/**
+ * 渲染來源管理清單
+ */
+function renderSourceManageList() {
+    const list = document.getElementById('manage-source-list');
+    list.innerHTML = '';
+    window.AppState.sources.forEach((src, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${src}</span>
+            <button class="delete-src-btn" data-idx="${index}">刪除</button>
+        `;
+        list.appendChild(li);
+    });
+
+    // 綁定刪除按鈕
+    document.querySelectorAll('.delete-src-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            deleteSource(idx);
+        });
+    });
+}
+
+/**
+ * 新增來源
+ */
+async function addSource() {
+    const input = document.getElementById('new-source-input');
+    const newSrc = input.value.trim();
+    if (!newSrc) return;
+
+    if (window.AppState.sources.includes(newSrc)) {
+        alert("此來源已經存在！");
+        return;
+    }
+
+    window.AppState.sources.push(newSrc);
+    input.value = '';
+    renderSourceManageList();
+    populateSourceDropdown();
+
+    try {
+        await API.syncSources();
+    } catch(e) {
+        alert("同步來源失敗：" + e.message);
+    }
+}
+
+/**
+ * 刪除來源
+ */
+async function deleteSource(index) {
+    if (!confirm(`確定要刪除「${window.AppState.sources[index]}」來源嗎？不會刪除現有物資資料。`)) return;
+    
+    window.AppState.sources.splice(index, 1);
+    renderSourceManageList();
+    populateSourceDropdown();
+
+    try {
+        await API.syncSources();
+    } catch(e) {
+        alert("同步來源失敗：" + e.message);
     }
 }
 

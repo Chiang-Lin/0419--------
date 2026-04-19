@@ -146,39 +146,76 @@ const API = {
             window.AppState.categories = [];
             window.AppState.sizesClothes = [];
             window.AppState.sizesDiapers = [];
+            window.AppState.sources = [];
             return;
         }
+
+        const headers = rows[0].map(h => (h || '').toString().trim());
+        const catIdx = headers.findIndex(h => h.includes('類別'));
+        const sourceIdx = headers.findIndex(h => h.includes('來源'));
+        const clothesIdx = headers.findIndex(h => h.includes('衣服'));
+        const diaperIdx = headers.findIndex(h => h.includes('尿布'));
+
+        window.AppState.settingsColMap = {
+            category: catIdx !== -1 ? catIdx : 0, 
+            clothes: clothesIdx !== -1 ? clothesIdx : 2, 
+            diapers: diaperIdx !== -1 ? diaperIdx : 3, 
+            source: sourceIdx !== -1 ? sourceIdx : 4 // 預設用 E 欄
+        };
+
         const dataRows = rows.slice(1);
-        
         const categories = [];
         const sizesClothes = [];
         const sizesDiapers = [];
+        const sources = [];
         
         dataRows.forEach(row => {
-            if (row[0] && row[0].trim() !== '') categories.push(row[0].trim());
-            if (row[2] && row[2].trim() !== '') sizesClothes.push(row[2].trim());
-            if (row[3] && row[3].trim() !== '') sizesDiapers.push(row[3].trim());
+            const getVal = (idx) => idx !== -1 && row[idx] ? row[idx].trim() : '';
+
+            const cat = getVal(window.AppState.settingsColMap.category);
+            if (cat) categories.push(cat);
+
+            const source = getVal(window.AppState.settingsColMap.source);
+            if (source) sources.push(source);
+
+            const sizeC = getVal(window.AppState.settingsColMap.clothes);
+            if (sizeC) sizesClothes.push(sizeC);
+
+            const sizeD = getVal(window.AppState.settingsColMap.diapers);
+            if (sizeD) sizesDiapers.push(sizeD);
         });
         
         window.AppState.categories = categories;
         window.AppState.sizesClothes = sizesClothes;
         window.AppState.sizesDiapers = sizesDiapers;
+        window.AppState.sources = sources.length > 0 ? sources : ['購買', '親友贈送', '恩典牌', '其他'];
+    },
+
+    async syncSettingsColumn(colIndex, arrayData) {
+        const values = [];
+        for (let i = 0; i < Math.max(arrayData.length, 50); i++) {
+            values.push([i < arrayData.length ? arrayData[i] : ""]);
+        }
+        
+        // 轉換 index 到英文字母 A-Z 
+        const colLetter = String.fromCharCode(65 + colIndex);
+        await this.fetchSheet(`'${CONFIG.SHEET_SETTINGS}'!${colLetter}2:${colLetter}${Math.max(arrayData.length, 50) + 1}`, 'PUT', {
+            values: values
+        });
     },
 
     /**
      * 同步類別至 Google Sheets
      */
     async syncCategories() {
-        const cats = window.AppState.categories;
-        // 我們將送出比現有陣列大一點的範圍，後面補空字串來「覆蓋刪除」舊資料
-        const values = [];
-        for (let i = 0; i < Math.max(cats.length, 50); i++) {
-            values.push([i < cats.length ? cats[i] : ""]);
-        }
-        
-        await this.fetchSheet(`'${CONFIG.SHEET_SETTINGS}'!A2:A${Math.max(cats.length, 50) + 1}`, 'PUT', {
-            values: values
-        });
+        await this.syncSettingsColumn(window.AppState.settingsColMap.category, window.AppState.categories);
+    },
+
+    /**
+     * 同步來源至 Google Sheets
+     */
+    async syncSources() {
+        await this.syncSettingsColumn(window.AppState.settingsColMap.source, window.AppState.sources);
     },
 
     itemToArray(item) {
