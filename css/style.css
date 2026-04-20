@@ -50,7 +50,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(192, 124, 116, 0.08); /* 柔和粉色陰影 */
+  box-shadow: 0 4px 12px rgba(192, 124, 116, 0.08);
+  /* 柔和粉色陰影 */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -61,7 +62,8 @@ body {
   color: var(--primary-color);
   font-weight: 700;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 5px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,1); /* 放點光暈避免被碎花吃掉字 */
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 1);
+  /* 放點光暈避免被碎花吃掉字 */
 }
 
 /* Container */
@@ -158,7 +160,8 @@ body {
 }
 
 .item-list li:hover {
-  background-color: #F8E3E1; /* 深一點點的粉杏底色 */
+  background-color: #F8E3E1;
+  /* 深一點點的粉杏底色 */
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -389,4 +392,42 @@ textarea:focus {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  scrollbar-width: none;
+}
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  padding: 0.5rem 1.2rem;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.tab-btn:hover {
+  background-color: var(--bg-color);
+  border-color: var(--primary-hover);
+  color: var(--primary-hover);
+}
+
+.tab-btn.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
 }

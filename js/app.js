@@ -1,6 +1,7 @@
 // app.js - 前端互動邏輯
 
 let tokenClient;
+let currentCategoryFilter = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -15,7 +16,7 @@ function initApp() {
     document.getElementById('add-btn').addEventListener('click', () => openItemModal(null));
     document.getElementById('close-modal-btn').addEventListener('click', closeItemModal);
     document.getElementById('cancel-modal-btn').addEventListener('click', closeItemModal);
-    
+
     // 原本全域類別按鈕已移除，剩內部關閉鈕與事件
     document.getElementById('close-category-btn').addEventListener('click', () => {
         document.getElementById('category-modal').classList.remove('active');
@@ -102,6 +103,7 @@ async function onLoginSuccess() {
 
     try {
         await API.loadData();
+        renderCategoryTabs();
         renderItemList();
     } catch (error) {
         console.error(error);
@@ -125,32 +127,72 @@ function handleLogout() {
 }
 
 /**
+ * 渲染分類標籤頁 (Tabs)
+ */
+function renderCategoryTabs() {
+    const container = document.getElementById('category-tabs');
+    if (!container) return;
+    
+    // 找出所有存在資料中的分類
+    const categoriesSet = new Set(window.AppState.items.map(item => item.category || '未分類'));
+    // 也包含預設設定好的分類
+    window.AppState.categories.forEach(cat => categoriesSet.add(cat));
+    
+    const allCategories = ['全部', ...Array.from(categoriesSet)];
+
+    let html = '';
+    
+    allCategories.forEach(cat => {
+        const isActive = (currentCategoryFilter === cat) || (currentCategoryFilter === null && cat === '全部');
+        const filterVal = cat === '全部' ? '' : cat;
+        // 如果是未分類，且目前資料中沒有未分類的項目，可以考慮不顯示，不過簡化處理全顯示也無妨
+        html += `<button class="tab-btn ${isActive ? 'active' : ''}" onclick="setCategoryFilter('${filterVal}')">${cat}</button>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+window.setCategoryFilter = function(category) {
+    currentCategoryFilter = category === '' ? null : category;
+    renderCategoryTabs(); // 更新 Tab 的 active 狀態
+    renderItemList();     // 重新過濾列表
+};
+
+/**
  * 渲染物資清單
  */
 function renderItemList() {
     const listContainer = document.getElementById('item-list');
     listContainer.innerHTML = '';
-    
+
     if (window.AppState.items.length === 0) {
         listContainer.innerHTML = '<li class="loading-state">尚無物資紀錄</li>';
         return;
     }
-    
+
     const keyword = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
 
     // 反轉陣列，讓最新新增的在上方
     let reversedItems = [...window.AppState.items].reverse();
 
+    // 類別過濾
+    if (currentCategoryFilter) {
+        reversedItems = reversedItems.filter(item => {
+            const cat = item.category || '未分類';
+            return cat === currentCategoryFilter;
+        });
+    }
+
     // 搜尋過濾
     if (keyword) {
-        reversedItems = reversedItems.filter(item => 
-            (item.name || '').toLowerCase().includes(keyword) || 
+        reversedItems = reversedItems.filter(item =>
+            (item.name || '').toLowerCase().includes(keyword) ||
             (item.note || '').toLowerCase().includes(keyword) ||
             (item.category || '').toLowerCase().includes(keyword) ||
             (item.location || '').toLowerCase().includes(keyword)
         );
     }
-    
+
     if (reversedItems.length === 0) {
         listContainer.innerHTML = '<li class="loading-state">找不到符合的物資</li>';
         return;
@@ -158,7 +200,7 @@ function renderItemList() {
 
     reversedItems.forEach(item => {
         const li = document.createElement('li');
-        
+
         let daysText = '';
         if (item.status === '已用完' && item.openDate && item.closeDate) {
             const start = new Date(item.openDate);
@@ -169,7 +211,7 @@ function renderItemList() {
                 daysText = `<span class="duration-tag">共使用了 ${diffDays} 天</span>`;
             }
         }
-        
+
         li.innerHTML = `
             <div class="item-header">
                 <span class="item-title">${item.name} ${item.quantity && item.quantity > 1 ? `<span style="font-size:0.8rem;color:#888;">(x${item.quantity})</span>` : ''}</span>
@@ -195,12 +237,12 @@ function renderItemList() {
 function populateCategoryDropdowns() {
     const catSelect = document.getElementById('item-category');
     const currentVal = catSelect.value;
-    
+
     catSelect.innerHTML = '<option value="">請選擇</option>';
     window.AppState.categories.forEach(cat => {
         catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
     });
-    
+
     if (currentVal) {
         catSelect.value = currentVal;
     }
@@ -212,12 +254,12 @@ function populateCategoryDropdowns() {
 function populateSourceDropdown() {
     const srcSelect = document.getElementById('item-source');
     const currentVal = srcSelect.value;
-    
+
     srcSelect.innerHTML = '<option value="">請選擇</option>';
     window.AppState.sources.forEach(src => {
         srcSelect.innerHTML += `<option value="${src}">${src}</option>`;
     });
-    
+
     if (currentVal) {
         srcSelect.value = currentVal;
     }
@@ -230,7 +272,7 @@ function openItemModal(item) {
     const isEdit = !!item;
     document.getElementById('modal-title').textContent = isEdit ? '編輯物資' : '新增物資';
     document.getElementById('delete-btn').style.display = isEdit ? 'inline-block' : 'none';
-    
+
     // 初始化下拉選項
     populateCategoryDropdowns();
     populateSourceDropdown();
@@ -346,14 +388,14 @@ async function addCategory() {
     window.AppState.categories.push(newCat);
     input.value = ''; // 清空輸入框
     renderCategoryManageList();
-    
+
     // 即時更新底下的下拉選單
     populateCategoryDropdowns();
 
     // 同步到 Sheets
     try {
         await API.syncCategories();
-    } catch(e) {
+    } catch (e) {
         alert("同步類別失敗：" + e.message);
     }
 }
@@ -363,17 +405,17 @@ async function addCategory() {
  */
 async function deleteCategory(index) {
     if (!confirm(`確定要刪除「${window.AppState.categories[index]}」類別嗎？不會刪除現有物資資料。`)) return;
-    
+
     window.AppState.categories.splice(index, 1);
     renderCategoryManageList();
-    
+
     // 即時更新底下的下拉選單
     populateCategoryDropdowns();
 
     // 同步到 Sheets
     try {
         await API.syncCategories();
-    } catch(e) {
+    } catch (e) {
         alert("同步類別失敗：" + e.message);
     }
 }
@@ -422,7 +464,7 @@ async function addSource() {
 
     try {
         await API.syncSources();
-    } catch(e) {
+    } catch (e) {
         alert("同步來源失敗：" + e.message);
     }
 }
@@ -432,14 +474,14 @@ async function addSource() {
  */
 async function deleteSource(index) {
     if (!confirm(`確定要刪除「${window.AppState.sources[index]}」來源嗎？不會刪除現有物資資料。`)) return;
-    
+
     window.AppState.sources.splice(index, 1);
     renderSourceManageList();
     populateSourceDropdown();
 
     try {
         await API.syncSources();
-    } catch(e) {
+    } catch (e) {
         alert("同步來源失敗：" + e.message);
     }
 }
@@ -449,13 +491,13 @@ async function deleteSource(index) {
  */
 async function handleSaveItem(e) {
     e.preventDefault(); // 阻止重新整理頁面
-    
+
     const nameVal = document.getElementById('item-name').value.trim();
     if (!nameVal) {
         alert("「物品名稱」為必填欄位，請填寫後再儲存！");
         return;
     }
-    
+
     const id = document.getElementById('form-id').value;
     const rowIndex = document.getElementById('form-row-index').value;
     const isEdit = !!rowIndex;
@@ -485,9 +527,10 @@ async function handleSaveItem(e) {
         } else {
             await API.addItem(itemData);
         }
-        
+
         // 為了確保剛剛新增的項目擁有正確的 _rowIndex 與最新資料，強制從 Google Sheets 重拉一次
         await API.loadData();
+        renderCategoryTabs();
         renderItemList();
         closeItemModal();
     } catch (err) {
@@ -504,7 +547,7 @@ async function handleSaveItem(e) {
 async function handleDeleteItem() {
     const rowIndex = document.getElementById('form-row-index').value;
     if (!rowIndex) return;
-    
+
     if (!confirm('確定要刪除此筆紀錄嗎？此動作無法復原。')) return;
 
     const deleteBtn = document.getElementById('delete-btn');
@@ -513,9 +556,10 @@ async function handleDeleteItem() {
 
     try {
         await API.deleteItem(rowIndex);
-        
+
         // 強制拉取最新資料，確保網頁與資料庫同步
         await API.loadData();
+        renderCategoryTabs();
         renderItemList();
         closeItemModal();
     } catch (err) {
