@@ -116,15 +116,33 @@ async function onLoginSuccess() {
  */
 function handleLogout() {
     if (window.AppState.token) {
-        google.accounts.oauth2.revoke(window.AppState.token, () => {
-            console.log('Token revoked');
-            window.AppState.token = null;
-            document.getElementById('login-overlay').classList.add('active');
-            document.getElementById('main-content').style.display = 'none';
-            document.getElementById('auth-btn').style.display = 'none';
-        });
+        try {
+            google.accounts.oauth2.revoke(window.AppState.token, () => {
+                console.log('Token revoked');
+                window.forceLogoutUI();
+            });
+        } catch (e) {
+            window.forceLogoutUI();
+        }
+    } else {
+        window.forceLogoutUI();
     }
 }
+
+/**
+ * 強制返回登入畫面 (用於登出或 Token 過期時)
+ */
+window.forceLogoutUI = function() {
+    window.AppState.token = null;
+    document.getElementById('login-overlay').classList.add('active');
+    document.getElementById('main-content').style.display = 'none';
+    document.getElementById('auth-btn').style.display = 'none';
+    
+    // 自動關閉任何開啟中的 Modal
+    document.getElementById('item-modal')?.classList.remove('active');
+    document.getElementById('category-modal')?.classList.remove('active');
+    document.getElementById('source-modal')?.classList.remove('active');
+};
 
 /**
  * 渲染分類標籤頁 (Tabs)
@@ -396,7 +414,12 @@ async function addCategory() {
     try {
         await API.syncCategories();
     } catch (e) {
-        alert("同步類別失敗：" + e.message);
+        if (e.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("同步類別失敗：" + e.message);
+        }
     }
 }
 
@@ -416,7 +439,12 @@ async function deleteCategory(index) {
     try {
         await API.syncCategories();
     } catch (e) {
-        alert("同步類別失敗：" + e.message);
+        if (e.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("同步類別失敗：" + e.message);
+        }
     }
 }
 
@@ -465,7 +493,12 @@ async function addSource() {
     try {
         await API.syncSources();
     } catch (e) {
-        alert("同步來源失敗：" + e.message);
+        if (e.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("同步來源失敗：" + e.message);
+        }
     }
 }
 
@@ -482,7 +515,12 @@ async function deleteSource(index) {
     try {
         await API.syncSources();
     } catch (e) {
-        alert("同步來源失敗：" + e.message);
+        if (e.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("同步來源失敗：" + e.message);
+        }
     }
 }
 
@@ -534,7 +572,12 @@ async function handleSaveItem(e) {
         renderItemList();
         closeItemModal();
     } catch (err) {
-        alert("儲存失敗: " + err.message);
+        if (err.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("儲存失敗: " + err.message);
+        }
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = '儲存';
@@ -563,7 +606,12 @@ async function handleDeleteItem() {
         renderItemList();
         closeItemModal();
     } catch (err) {
-        alert("刪除失敗: " + err.message);
+        if (err.message === "UNAUTHORIZED") {
+            alert("登入狀態已過期，請重新登入！");
+            window.forceLogoutUI();
+        } else {
+            alert("刪除失敗: " + err.message);
+        }
     } finally {
         deleteBtn.disabled = false;
         deleteBtn.textContent = '刪除';
